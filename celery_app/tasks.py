@@ -6,17 +6,18 @@ from typing import Tuple
 from celery import Celery
 from celery.schedules import crontab
 from celery.signals import worker_ready
+from dotenv import load_dotenv
 
 from big_query_handler.query_handler import BigQueryManager
 from celery_app.cache_manager import CacheManager
 
+load_dotenv()
 logging.basicConfig(level=logging.INFO, format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s')
 logger = logging.getLogger("chicago_crime")
 logger.setLevel(logging.INFO)
 
-# todo add this to environment variables
-celery_broker = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
-celery_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
+celery_broker = os.environ.get("CELERY_BROKER_URL")
+celery_backend = os.environ.get("CELERY_RESULT_BACKEND")
 
 celery = Celery(
     main='chicago_crimes', broker=celery_broker, backend=celery_backend,
