@@ -13,4 +13,4 @@ application.config['SECRET_KEY'] = os.environ['FLASK_SECRET_KEY']
 application.register_blueprint(chicago_crimes_blueprint)
 
 if __name__ == '__main__':
-    application.run(debug=debug_mode, port=5000, host='0.0.0.0')
+    application.run(debug=debug_mode, port=8000, host='0.0.0.0')

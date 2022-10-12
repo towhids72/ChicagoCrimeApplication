@@ -1,8 +1,10 @@
 import os
 from typing import List, Dict, Tuple, Set
 
+import httplib2
 from google.cloud import bigquery
 from google.cloud.exceptions import GoogleCloudError, GatewayTimeout
+from httplib2 import socks
 
 
 class BigQueryManager:
@@ -16,11 +18,8 @@ class BigQueryManager:
         self.client = bigquery.Client()
         self.query_timeout = 60
         # todo remove these files when you send it
-        proxy = 'http://127.0.0.1:18080'
-        os.environ['http_proxy'] = proxy
-        os.environ['HTTP_PROXY'] = proxy
-        os.environ['https_proxy'] = proxy
-        os.environ['HTTPS_PROXY'] = proxy
+        self.proxy = 'http://127.0.0.1:18080'
+        # os.environ['http_proxy'] = proxy
 
     def query_crimes_by_primary_type(self, primary_type: str):
         query_expression = (
@@ -30,6 +29,9 @@ class BigQueryManager:
             f'GROUP BY latitude, longitude, primary_date '
             f'ORDER BY primary_date DESC LIMIT 5000'
         )
+        os.environ['HTTP_PROXY'] = self.proxy
+        # os.environ['https_proxy'] = proxy
+        os.environ['HTTPS_PROXY'] = self.proxy
 
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
@@ -54,6 +56,8 @@ class BigQueryManager:
                 'date': item[2].strftime('%Y-%m-%d')
             } for item in query_response if item[0] and item[1]
         ]
+        os.environ['HTTP_PROXY'] = None
+        os.environ['HTTPS_PROXY'] = None
         return fetched_crimes_locations
 
     def query_crimes_primary_types(self) -> Tuple[str]:
@@ -61,6 +65,8 @@ class BigQueryManager:
             'SELECT DISTINCT(primary_type) '
             'FROM `bigquery-public-data.chicago_crime.crime`'
         )
+        os.environ['HTTP_PROXY'] = self.proxy
+        os.environ['HTTPS_PROXY'] = self.proxy
 
         try:
             query_job = self.client.query(query=query_expression, timeout=60)
@@ -73,6 +79,8 @@ class BigQueryManager:
             raise ex
 
         primary_types: Set[str] = set([item[0].replace(' - ', '-') for item in query_response])
+        os.environ['HTTP_PROXY'] = None
+        os.environ['HTTPS_PROXY'] = None
 
         return tuple(primary_types)
 
