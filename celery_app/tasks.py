@@ -16,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname) 5s/%(asctime)s] %(
 logger = logging.getLogger("chicago_crime")
 logger.setLevel(logging.INFO)
 
+selected_env = os.environ.get('ENVIRONMENT')
 celery_broker = os.environ.get("CELERY_BROKER_URL")
 celery_backend = os.environ.get("CELERY_RESULT_BACKEND")
 
@@ -59,8 +60,12 @@ def get_and_update_crimes_by_primary_type(primary_types: Tuple[str] = ()):
         primary_types = CacheManager.get_crimes_primary_types()
         if primary_types is None:
             # if primary types cache is empty, so we should query distinct primary types from BigQuery
-            primary_types = BigQueryManager().query_crimes_primary_types()
-            CacheManager.set_crimes_primary_types(primary_types)
+            try:
+                primary_types = BigQueryManager().query_crimes_primary_types()
+                CacheManager.set_crimes_primary_types(primary_types)
+            except Exception as ex:
+                logger.error(f'Error in get primary types due to {ex}')
+                raise ex
 
     for primary in primary_types:
         get_crimes_by_primary_type_from_bigquery_and_cache.apply_async(queue='crimes', args=(primary,))

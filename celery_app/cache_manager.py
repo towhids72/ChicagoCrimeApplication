@@ -2,7 +2,9 @@ import os
 import pickle
 
 import redis
+from dotenv import load_dotenv
 
+load_dotenv()
 redis_host = os.environ.get('REDIS_HOST', 'redis')
 redis_port = os.environ.get('REDIS_PORT', 6379)
 redis_db = os.environ.get('REDIS_DB', 0)

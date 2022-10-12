@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    expose:
+      - 6379
+    networks:
+      - chicago_network
+    volumes:
+      - redis_data:/data
+    command: [sh, -c, "rm -f /data/dump.rdb && redis-server --save '' --dbfilename '' --appendonly no --appendfsync no"]
+
+  flask_api:
+    build: .
+    image: 127.0.0.1:5000/flask_api
+    container_name: flask_api
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1024MB
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    command: gunicorn --bind 0.0.0.0:8000 api.app:application
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
+    networks:
+      - chicago_network
+
+  celery_bigquery:
+    image: 127.0.0.1:5000/celery
+    container_name: celery_bigquery
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 2048MB
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    command: celery -A celery_app.tasks worker -Q crimes --loglevel=INFO --concurrency=1 -n worker_bigquery@%n
+    depends_on:
+      - redis
+      - celerybeat
+    networks:
+      - chicago_network
+
+  celerybeat:
+    image: 127.0.0.1:5000/celerybeat
+    container_name: celerybeat
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 200MB
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    command: celery -A celery_app.tasks beat --loglevel=INFO --pidfile=
+    depends_on:
+      - redis
+    networks:
+      - chicago_network
+
+  streamlit_dashboard:
+    image: 127.0.0.1:5000/streamlit_dashboard
+    container_name: streamlit_dashboard
+    build: .
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    ports:
+      - 8050:8050
+    networks:
+      - chicago_network
+    command: python -m streamlit run streamlit_dashboard.py --server.address 0.0.0.0 --server.port 8050
+
+
+volumes:
+  redis_data:
+
+networks:
+  chicago_network:
+    external: true
