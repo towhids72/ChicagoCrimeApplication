@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from typing import Tuple
 
 from celery import Celery
 from celery.schedules import crontab
@@ -17,11 +16,13 @@ load_dotenv()
 redis_host = os.environ.get('REDIS_HOST')
 redis_port = os.environ.get('REDIS_PORT')
 
+# create celery broker and backend from redis host that we retrieved from environment variables
 celery_broker = f'redis://{redis_host}:{redis_port}'
 celery_backend = f'redis://{redis_host}:{redis_port}'
 
 logger = LogUtils.get_logger(logger_name='celery_tasks', level=logging.INFO)
 
+# instantiate celery objects and configure tasks
 celery = Celery(
     main='chicago_crimes', broker=celery_broker, backend=celery_backend,
     include=[
@@ -30,23 +31,17 @@ celery = Celery(
 )
 
 
-@celery.task(name="get_and_update_crimes_primary_types_in_cache")
-def get_and_update_crimes_primary_types_in_cache():
-    logger.info('Getting crimes primary types from BigQuery...')
-    try:
-        crimes_primary_types = BigQueryManager().query_crimes_primary_types()
-        return CacheManager.set_crimes_primary_types(crimes_primary_types)
-    except BigQueryManager.QueryTimeoutError:
-        logger.error('BigQuery timeout error')
-    except BigQueryManager.GoogleCloudQueryError:
-        logger.error('BigQuery does not provide data, maybe credential is missing!')
-    except Exception:
-        logger.exception('Error while getting crimes primary types')
-    return False
-
-
 @celery.task(name='get_crimes_by_primary_type_from_bigquery_and_cache')
-def get_crimes_by_primary_type_from_bigquery_and_cache(primary_type: str):
+def get_crimes_by_primary_type_from_bigquery_and_cache(primary_type: str) -> bool:
+    """A celery task that fetch crime data of given primary type and caches it.
+
+    Args:
+        primary_type (str): A string that indicates primary type.
+
+    Returns:
+        A boolean value that shows task was successful or failed.
+    """
+
     logger.info(f'Getting and caching {primary_type} crimes data...')
     try:
         crimes_by_primary_type = BigQueryManager().query_crimes_by_primary_type(primary_type)
@@ -61,24 +56,31 @@ def get_crimes_by_primary_type_from_bigquery_and_cache(primary_type: str):
 
 
 @celery.task(name='get_and_update_crimes_by_primary_type')
-def get_and_update_crimes_by_primary_type(primary_types: Tuple[str] = ()):
-    logger.info(f'Preparing to cache {str(primary_types) if primary_types else "All"} crimes data...')
-    if not primary_types:
-        primary_types = CacheManager.get_crimes_primary_types()
-        if primary_types is None:
-            # if primary types cache is empty, so we should query distinct primary types from BigQuery
-            try:
-                primary_types = BigQueryManager().query_crimes_primary_types()
-                CacheManager.set_crimes_primary_types(primary_types)
-            except BigQueryManager.QueryTimeoutError:
-                logger.error('BigQuery timeout error')
-            except BigQueryManager.GoogleCloudQueryError:
-                logger.error('BigQuery does not provide data, maybe credential is missing!')
-            except Exception as ex:
-                logger.exception('Error while getting crimes of primary type')
-                raise ex
+def get_and_update_crimes_by_primary_type() -> bool:
+    """This celery task gets all crimes primary types and
+    fetches and caches crimes data for them.
 
+    Returns:
+        A boolean value that shows task was successful or failed.
+    """
+
+    try:
+        primary_types = BigQueryManager().query_crimes_primary_types()
+        # cache fetched crimes primary types
+        CacheManager.set_crimes_primary_types(primary_types)
+    except BigQueryManager.QueryTimeoutError:
+        logger.error('BigQuery timeout error')
+        return False
+    except BigQueryManager.GoogleCloudQueryError:
+        logger.error('BigQuery does not provide data, maybe credential is missing!')
+        return False
+    except Exception:
+        logger.exception('Error while getting crimes of primary type')
+        return False
+
+    logger.info(f'Preparing to cache {str(primary_types)} crimes data...')
     for primary_type in primary_types:
+        # creating tasks to fetch and cache crimes data
         get_crimes_by_primary_type_from_bigquery_and_cache.apply_async(queue='crimes', args=(primary_type,))
 
     return True
@@ -87,6 +89,8 @@ def get_and_update_crimes_by_primary_type(primary_types: Tuple[str] = ()):
 # noinspection PyUnusedLocal
 @worker_ready.connect
 def at_start(sender, **kwargs):
+    """this function will be called every time celery worker runs to fetch and cache data"""
+
     if 'crimes' in sender.app.amqp.queues:
         logger.info('Maybe it is the first time that I am running! so lets cache some data at first')
         # we put process to sleep until everything runs properly, after that we complete "at start" tasks
@@ -98,17 +102,14 @@ def at_start(sender, **kwargs):
 # noinspection PyUnusedLocal
 @celery.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
+    """This method is used to set up celery periodic tasks"""
+
     logger.info('Set up periodic tasks')
 
+    # at midnight this task will run to fetch and cache crimes data
     sender.add_periodic_task(
         crontab(minute="0", hour="0"),
-        get_and_update_crimes_primary_types_in_cache.s(),
+        get_and_update_crimes_by_primary_type.s(),
         name='get_and_update_crimes_primary_types_in_cache',
-        queue='crimes'
-    )
-    sender.add_periodic_task(
-        crontab(minute="10", hour="0"),
-        get_crimes_by_primary_type_from_bigquery_and_cache.s(),
-        name='get_crimes_by_primary_type_from_bigquery_and_cache',
         queue='crimes'
     )

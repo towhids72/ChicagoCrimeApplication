@@ -2,8 +2,7 @@ import unittest
 
 import pytest
 
-from celery_app.tasks import get_and_update_crimes_primary_types_in_cache, \
-    get_crimes_by_primary_type_from_bigquery_and_cache
+from celery_app.tasks import get_crimes_by_primary_type_from_bigquery_and_cache
 
 
 # there will be 2 DeprecationWarning while we are using pytest
@@ -12,12 +11,6 @@ from celery_app.tasks import get_and_update_crimes_primary_types_in_cache, \
 
 
 class TestCeleryTasks(unittest.TestCase):
-    @pytest.mark.celery(result_backend='redis://localhost:6379')
-    def test_getting_and_caching_crimes_primary_types(self):
-        task = get_and_update_crimes_primary_types_in_cache.apply()
-        task_result = task.get()
-        self.assertTrue(task_result, 'Task failed')
-
     @pytest.mark.celery(result_backend='redis://localhost:6379')
     def test_getting_crimes_of_primary_type_and_cache(self):
         default_primary_type = 'HOMICIDE'

@@ -1,32 +1,51 @@
 import os
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Union
 
 from google.cloud import bigquery
 from google.cloud.exceptions import GoogleCloudError, GatewayTimeout
 
 
 class BigQueryManager:
+    """A manager class to query data from Google BigQuery dataset"""
+
     class GoogleCloudQueryError(Exception):
+        """An Exception class ro raise when Google doesn't response in given timeout"""
         pass
 
     class QueryTimeoutError(Exception):
+        """An Exception class to raise when Google returns error on query"""
         pass
 
     def __init__(self):
+        """Initialize BigQuery client and set timeout for it"""
         self.client = bigquery.Client()
         self.query_timeout = 60
         # todo remove these files when you send it
-        self.proxy = 'http://0.0.0.0:18080'
+        self.proxy = 'http://127.0.0.1:18080'
         os.environ['HTTP_PROXY'] = self.proxy
         os.environ['HTTPS_PROXY'] = self.proxy
 
-    def query_crimes_by_primary_type(self, primary_type: str):
+    def query_crimes_by_primary_type(self, primary_type: str) -> List[Dict[str, Union[float, str]]]:
+        """Fetches data for crime of given primary type.
+        Data is sorted based on crime date and limited to 2000 points.
+
+        Args:
+            primary_type (str): Crime primary type
+
+        Returns:
+            A list of crimes that contains crime location and date in a dict.
+
+        Raises:
+            BigQueryManager.GoogleCloudQueryError
+            BigQueryManager.QueryTimeoutError
+        """
+
         query_expression = (
-            f'SELECT latitude, longitude, DATE(date) AS primary_date '
+            f'SELECT latitude, longitude, DATE(date) AS crime_date '
             f'FROM `bigquery-public-data.chicago_crime.crime` '
             f'WHERE primary_type=@primary_type '
             f'GROUP BY latitude, longitude, primary_date '
-            f'ORDER BY primary_date DESC LIMIT 2000'
+            f'ORDER BY crime_date DESC LIMIT 2000'
         )
 
         job_config = bigquery.QueryJobConfig(
@@ -56,6 +75,16 @@ class BigQueryManager:
         return fetched_crimes_locations
 
     def query_crimes_primary_types(self) -> Tuple[str]:
+        """Returns a tuple of distinct crimes primary type
+
+        Returns:
+             A tuple containing distinct strings of primary types
+
+        Raises:
+            BigQueryManager.GoogleCloudQueryError
+            BigQueryManager.QueryTimeoutError
+        """
+
         query_expression = (
             'SELECT DISTINCT(primary_type) '
             'FROM `bigquery-public-data.chicago_crime.crime`'
