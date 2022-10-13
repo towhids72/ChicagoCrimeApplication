@@ -31,13 +31,11 @@ services:
       restart_policy:
         condition: on-failure
         max_attempts: 3
-    command: gunicorn --bind 0.0.0.0:8000 api.app:application
+    command: gunicorn --bind 0.0.0.0:8000 --workers=2 --threads=2 api.app:application
     ports:
       - 8000:8000
     depends_on:
       - redis
-#    extra_hosts:
-#      - "host.docker.internal:host-gateway"
     networks:
       - chicago_network
 
