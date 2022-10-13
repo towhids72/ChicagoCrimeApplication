@@ -1,6 +1,5 @@
 import logging
 import os
-import traceback
 from typing import Union, Dict
 
 import pandas as pd
@@ -9,12 +8,13 @@ import streamlit as st
 import pydeck as pdk
 from dotenv import load_dotenv
 
+from utilities.log_utils import LogUtils
+
 load_dotenv()
-logging.basicConfig(level=logging.INFO, format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s')
-logger = logging.getLogger("chicago_crime")
-logger.setLevel(logging.INFO)
 
 FLASK_BASE_URL = os.environ['FLASK_APP_BASE_URL']
+
+logger = LogUtils.get_logger(logger_name='streamlit_dashboard', level=logging.ERROR)
 
 
 class StreamlitDashboardManager:
@@ -24,13 +24,14 @@ class StreamlitDashboardManager:
         response = requests.get(url).json()
         if response['code'] != 200:
             raise Exception(response['message'])
-        return response['data']
+        # sort primary type alphabetically
+        primary_types = sorted(response['data'], key=lambda x: x)
+        return primary_types
 
     @classmethod
     def get_crimes_of_primary_type(cls, primary_type: str):
-        url = f'{FLASK_BASE_URL}/api/crimes/'
-        request_body = {'primary_type': primary_type}
-        response = requests.post(url, json=request_body).json()
+        url = f'{FLASK_BASE_URL}/api/crimes/?primary_type={primary_type}'
+        response = requests.get(url).json()
         if response['code'] != 200:
             raise Exception(response['message'])
         return response['data']
@@ -88,7 +89,7 @@ class StreamlitDashboardManager:
         st.title('Chicago Crimes Map')
         try:
             primary_types = cls.get_primary_types()
-            selected_primary_type = st.selectbox('Crime Type', primary_types, index=1)
+            selected_primary_type = st.selectbox('Crime Type', primary_types)
             crimes_of_primary_type = cls.get_crimes_of_primary_type(selected_primary_type)
             crimes_df = cls.load_crimes_of_type_into_df(crimes_of_primary_type)
             user_date_input = st.date_input(
@@ -100,9 +101,9 @@ class StreamlitDashboardManager:
             crimes_df = cls.filter_crimes_df_based_on_date(crimes_df, user_date_input)
             st.write(f'Found {len(crimes_df)} crimes of type "{selected_primary_type}" between selected dates')
             cls.create_crimes_map(crimes_df)
-        except Exception as ex:
-            # We must track this exceptions by sending them to a alerting channel
-            logger.error(f'{ex}\nTrace: {traceback.format_exc()}')
+        except Exception:
+            # We must track this exceptions by sending them to an alerting channel
+            logger.exception('Error occurred while getting crimes data and creating map')
             return st.write('Oops! there is an error, we are working on it...')
 
 

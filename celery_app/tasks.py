@@ -10,15 +10,17 @@ from dotenv import load_dotenv
 
 from big_query_handler.query_handler import BigQueryManager
 from celery_app.cache_manager import CacheManager
+from utilities.log_utils import LogUtils
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO, format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s')
-logger = logging.getLogger("chicago_crime")
-logger.setLevel(logging.INFO)
 
-selected_env = os.environ.get('ENVIRONMENT')
-celery_broker = os.environ.get("CELERY_BROKER_URL")
-celery_backend = os.environ.get("CELERY_RESULT_BACKEND")
+redis_host = os.environ.get('REDIS_HOST')
+redis_port = os.environ.get('REDIS_PORT')
+
+celery_broker = f'redis://{redis_host}:{redis_port}'
+celery_backend = f'redis://{redis_host}:{redis_port}'
+
+logger = LogUtils.get_logger(logger_name='celery_tasks', level=logging.INFO)
 
 celery = Celery(
     main='chicago_crimes', broker=celery_broker, backend=celery_backend,
@@ -33,11 +35,14 @@ def get_and_update_crimes_primary_types_in_cache():
     logger.info('Getting crimes primary types from BigQuery...')
     try:
         crimes_primary_types = BigQueryManager().query_crimes_primary_types()
-        CacheManager.set_crimes_primary_types(crimes_primary_types)
-        return True
-    except Exception as ex:
-        # we can use an alerting module to capture this errors
-        logger.error(ex)
+        return CacheManager.set_crimes_primary_types(crimes_primary_types)
+    except BigQueryManager.QueryTimeoutError:
+        logger.error('BigQuery timeout error')
+    except BigQueryManager.GoogleCloudQueryError:
+        logger.error('BigQuery does not provide data, maybe credential is missing!')
+    except Exception:
+        logger.exception('Error while getting crimes primary types')
+    return False
 
 
 @celery.task(name='get_crimes_by_primary_type_from_bigquery_and_cache')
@@ -45,12 +50,14 @@ def get_crimes_by_primary_type_from_bigquery_and_cache(primary_type: str):
     logger.info(f'Getting and caching {primary_type} crimes data...')
     try:
         crimes_by_primary_type = BigQueryManager().query_crimes_by_primary_type(primary_type)
-        CacheManager.set_crimes_filtered_by_primary_type(primary_type, crimes_by_primary_type)
-        return True
-    except Exception as ex:
-        # we can use an alerting module to capture this errors
-        logger.error(ex)
-        raise ex
+        return CacheManager.set_crimes_filtered_by_primary_type(primary_type, crimes_by_primary_type)
+    except BigQueryManager.QueryTimeoutError:
+        logger.error('BigQuery timeout error')
+    except BigQueryManager.GoogleCloudQueryError:
+        logger.error('BigQuery does not provide data, maybe credential is missing!')
+    except Exception:
+        logger.exception('Error while getting crimes of primary type')
+    return False
 
 
 @celery.task(name='get_and_update_crimes_by_primary_type')
@@ -63,12 +70,16 @@ def get_and_update_crimes_by_primary_type(primary_types: Tuple[str] = ()):
             try:
                 primary_types = BigQueryManager().query_crimes_primary_types()
                 CacheManager.set_crimes_primary_types(primary_types)
+            except BigQueryManager.QueryTimeoutError:
+                logger.error('BigQuery timeout error')
+            except BigQueryManager.GoogleCloudQueryError:
+                logger.error('BigQuery does not provide data, maybe credential is missing!')
             except Exception as ex:
-                logger.error(f'Error in get primary types due to {ex}')
+                logger.exception('Error while getting crimes of primary type')
                 raise ex
 
-    for primary in primary_types:
-        get_crimes_by_primary_type_from_bigquery_and_cache.apply_async(queue='crimes', args=(primary,))
+    for primary_type in primary_types:
+        get_crimes_by_primary_type_from_bigquery_and_cache.apply_async(queue='crimes', args=(primary_type,))
 
     return True
 

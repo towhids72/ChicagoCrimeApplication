@@ -1,25 +1,25 @@
-from typing import List, Dict, Union
+from http import HTTPStatus
 
 from flask import jsonify
 
 
 class APIResponse:
     @staticmethod
-    def ok_response(data, message: str = 'OK'):
+    def ok_response(data, http_status: HTTPStatus = HTTPStatus.OK):
         return jsonify(
             {
-                "code": 200,
-                "message": message,
+                "code": http_status,
+                "message": http_status.description,
                 "data": data
             }
-        )
+        ), http_status
 
     @staticmethod
-    def error_response(message: str, code: int = 400):
+    def error_response(http_status: HTTPStatus):
         return jsonify(
             {
-                "code": code,
-                "message": message,
+                "code": http_status,
+                "message": http_status.description,
                 "data": []
             }
-        )
+        ), http_status
