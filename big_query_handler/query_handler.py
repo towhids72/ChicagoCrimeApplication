@@ -1,4 +1,3 @@
-import os
 from typing import List, Dict, Tuple, Set, Union
 
 from google.cloud import bigquery
@@ -9,11 +8,11 @@ class BigQueryManager:
     """A manager class to query data from Google BigQuery dataset"""
 
     class GoogleCloudQueryError(Exception):
-        """An Exception class ro raise when Google doesn't response in given timeout"""
+        """An Exception class to raise when Google returns error on query"""
         pass
 
     class QueryTimeoutError(Exception):
-        """An Exception class to raise when Google returns error on query"""
+        """An Exception class to raise when Google doesn't response in given time"""
         pass
 
     def __init__(self):
@@ -23,7 +22,7 @@ class BigQueryManager:
 
     def query_crimes_by_primary_type(self, primary_type: str) -> List[Dict[str, Union[float, str]]]:
         """Fetches data for crime of given primary type.
-        Data is sorted based on crime date and limited to 2000 points.
+        Data is sorted based on crime date and limited to 2000 datapoints.
 
         Args:
             primary_type (str): Crime primary type

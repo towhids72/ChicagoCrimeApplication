@@ -37,11 +37,11 @@ def get_chicago_crimes_primary_types() -> APIResponse:
         return APIResponse.error_response(HTTPStatus.REQUEST_TIMEOUT)
     except BigQueryManager.GoogleCloudQueryError:
         logger.error('BigQuery does not provide data, maybe credential is missing!')
-        return APIResponse.error_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+        return APIResponse.error_response(HTTPStatus.BAD_GATEWAY)
     except Exception:
         # we should capture this kind of exceptions somewhere like Slack ot Telegram to get notify
         logger.exception('Error while getting crimes primary types')
-        return APIResponse.error_response(HTTPStatus.SERVICE_UNAVAILABLE)
+        return APIResponse.error_response(HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 # noinspection PyTypeChecker
@@ -55,7 +55,7 @@ def get_chicago_crimes_by_primary_type():
         An APIResponse which contains JSON data and proper HTTP status
 
     Responses:
-        * 200: A list of latitude, longitude, and the date of the crime.
+        * 200: A list of latitude, longitude, and the date of crime.
         * 408: request timed out from data provider.
         * 500: can not connect to data provider.
         * 503: service currently is unavailable.
@@ -73,8 +73,8 @@ def get_chicago_crimes_by_primary_type():
         return APIResponse.error_response(HTTPStatus.REQUEST_TIMEOUT)
     except BigQueryManager.GoogleCloudQueryError:
         logger.error('BigQuery does not provide data, maybe credential is missing!')
-        return APIResponse.error_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+        return APIResponse.error_response(HTTPStatus.BAD_GATEWAY)
     except Exception:
         # we should capture this kind of exceptions somewhere like Slack ot Telegram to get notify
         logger.exception(f'Error while getting crimes of primary type')
-        return APIResponse.error_response(HTTPStatus.SERVICE_UNAVAILABLE)
+        return APIResponse.error_response(HTTPStatus.INTERNAL_SERVER_ERROR)

@@ -13,8 +13,8 @@ from utilities.log_utils import LogUtils
 
 load_dotenv()
 
-redis_host = os.environ.get('REDIS_HOST')
-redis_port = os.environ.get('REDIS_PORT')
+redis_host = os.environ.get('REDIS_HOST', 'localhost')
+redis_port = os.environ.get('REDIS_PORT', 6379)
 
 # create celery broker and backend from redis host that we retrieved from environment variables
 celery_broker = f'redis://{redis_host}:{redis_port}'
@@ -33,7 +33,7 @@ celery = Celery(
 
 @celery.task(name='get_crimes_by_primary_type_from_bigquery_and_cache')
 def get_crimes_by_primary_type_from_bigquery_and_cache(primary_type: str) -> bool:
-    """A celery task that fetch crime data of given primary type and caches it.
+    """A celery task that fetch crimes data of given primary type and caches it.
 
     Args:
         primary_type (str): A string that indicates primary type.

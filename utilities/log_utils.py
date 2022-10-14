@@ -14,7 +14,7 @@ class LogUtils:
         Args:
             logger_name (str): A name for the logger
             level: Logging level, default is logging.INFO
-            log_format: A string that shows how to log, default is [%(levelname) 5s/%(asctime)s] %(name)s: %(message)s
+            log_format (str): A string that shows how to log, default is [%(levelname) 5s/%(asctime)s] %(name)s: %(message)s
 
         Return:
             A logger object
