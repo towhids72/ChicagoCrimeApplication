@@ -5,6 +5,18 @@ crime type and also crimes date.
 
 ### How to run
 
+* Run using shell script
+  * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
+  * Create a ".env" file in the project root directory, docker containers will look for this 
+   file to load environment variables
+  * Copy the deployment environment variables from ".env.sample" file and replace necessary values
+  * Make the shell script executable
+    * `sudo chmod +x deploy_file.sh`
+  * Run the shell script
+    * `./deploy_file.sh`
+  * Open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
+
+
 * Run using docker
   * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
   * Create a ".env" file in the project root directory, docker containers will look for this 
