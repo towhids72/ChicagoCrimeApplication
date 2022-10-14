@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Tuple, Set, Union
 
 from google.cloud import bigquery

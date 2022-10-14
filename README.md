@@ -4,24 +4,14 @@ This application shows a map of Chicago crimes, which is filterable based on
 crime type and also crimes date.
 
 ### How to run
+####You can run application in development or in production
 
-* Run using shell script
-  * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
-  * Create a ".env" file in the project root directory, docker containers will look for this 
-   file to load environment variables
-  * Copy the deployment environment variables from ".env.docker.sample" file and replace necessary values
-  * Make the shell script executable
-    * `sudo chmod +x deploy_file.sh`
-  * Run the shell script
-    * `./deploy_file.sh`
-  * Open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
-
-
-* Run using docker
+* Run in production using docker
   * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
   * Create a ".env" file in the project root directory, docker containers will look for this 
     file to load environment variables
   * Copy the deployment environment variables from ".env.docker.sample" file and replace necessary values
+  * Make sure that you replaced you Google credential file name in ".env" file
   * Run below command, it will create a docker network that containers will use
     * `docker network create chicago_network`
   * Build and run all docker containers using below command
@@ -29,13 +19,14 @@ crime type and also crimes date.
   * Open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
 
 
-* Run services locally
+* Run in development(locally)
     * Create a virtual environment with python 3.10, you can use conda:
       * `conda create --name=your_env_name python=3.10`
       * `conda activate your_env_name`
     * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
     * Create a ".env" file in the project root directory, we use this file to load environment variables
     * Copy the development environment variables from ".env.local.sample" file and replace necessary values
+    * Make sure that you replaced you Google credential files name in ".env" file
     * Now install project requirements
       * `pip install -r requirements.txt`
     * Before running app, you can test Flask app and celery tasks by running
@@ -49,7 +40,11 @@ crime type and also crimes date.
       * `python -m streamlit run streamlit_dashboard.py --server.address 0.0.0.0 --server.port 8050`
     * Now open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
 
-    
+
+###Warnings
+First time it may take a bit longer to load the map, it tries to cache the data, after that it will load faster
+
+
 ## Future Improvements
 There are some improvements that we can implement in code, first somehow we should get notified when there is a critical
 error(e.g. error while loading the streamlit dashboard). We can use tools like Sentry, or use alerting modules to

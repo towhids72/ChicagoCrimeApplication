@@ -7,7 +7,7 @@ from celery.schedules import crontab
 from celery.signals import worker_ready
 from dotenv import load_dotenv
 
-from big_query_handler.query_handler import BigQueryManager
+from big_query.crimes import BigQueryManager
 from celery_app.cache_manager import CacheManager
 from utilities.log_utils import LogUtils
 

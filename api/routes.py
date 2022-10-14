@@ -5,7 +5,7 @@ from flask import Blueprint, request
 
 from api.api_response import APIResponse
 from api.services import CrimesDataManager
-from big_query_handler.query_handler import BigQueryManager
+from big_query.crimes import BigQueryManager
 from utilities.log_utils import LogUtils
 
 logger = LogUtils.get_logger(logger_name='flask_api', level=logging.ERROR)

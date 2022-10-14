@@ -1,6 +1,6 @@
 from typing import Tuple, List, Dict, Union
 
-from big_query_handler.query_handler import BigQueryManager
+from big_query.crimes import BigQueryManager
 from celery_app.cache_manager import CacheManager
 
 
