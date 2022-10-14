@@ -9,7 +9,7 @@ crime type and also crimes date.
   * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
   * Create a ".env" file in the project root directory, docker containers will look for this 
    file to load environment variables
-  * Copy the deployment environment variables from ".env.sample" file and replace necessary values
+  * Copy the deployment environment variables from ".env.docker.sample" file and replace necessary values
   * Make the shell script executable
     * `sudo chmod +x deploy_file.sh`
   * Run the shell script
@@ -21,7 +21,7 @@ crime type and also crimes date.
   * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
   * Create a ".env" file in the project root directory, docker containers will look for this 
     file to load environment variables
-  * Copy the deployment environment variables from ".env.sample" file and replace necessary values
+  * Copy the deployment environment variables from ".env.docker.sample" file and replace necessary values
   * Run below command, it will create a docker network that containers will use
     * `docker network create chicago_network`
   * Build and run all docker containers using below command
@@ -35,7 +35,7 @@ crime type and also crimes date.
       * `conda activate your_env_name`
     * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
     * Create a ".env" file in the project root directory, we use this file to load environment variables
-    * Copy the development environment variables from ".env.sample" file and replace necessary values
+    * Copy the development environment variables from ".env.local.sample" file and replace necessary values
     * Now install project requirements
       * `pip install -r requirements.txt`
     * Before running app, you can test Flask app and celery tasks by running
