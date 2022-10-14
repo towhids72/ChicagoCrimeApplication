@@ -31,6 +31,7 @@ class StreamlitDashboardManager:
             A list of crimes primary types.
         """
 
+        # we can also use a Streamlit cache to decrease API calls to get primary types on page changes
         url = f'{FLASK_BASE_URL}/api/crimes/primary_types'
         response = requests.get(url).json()
         # check if API returns correct data, otherwise raise an exception
@@ -117,22 +118,21 @@ class StreamlitDashboardManager:
 
     @classmethod
     def filter_crimes_df_based_on_date(
-            cls, crimes_df: pd.DataFrame, user_date_input: Tuple[datetime.datetime]
+            cls, crimes_df: pd.DataFrame, date_range: Tuple[datetime.datetime]
     ) -> pd.DataFrame:
         """Filter given :class:`DataFrame` between two given dates
 
         Args:
             crimes_df: A pandas DataFrame
-            user_date_input: A tuple of two selected date
+            date_range: A tuple of two selected date
 
         Returns:
             A pandas DataFrame
         """
 
-        # todo check dates types
         # check if user selected two dates, otherwise we shouldn't filter dataframe until user selects second date
-        if len(user_date_input) == 2:
-            user_date_input = tuple(map(pd.to_datetime, user_date_input))
+        if len(date_range) == 2:
+            user_date_input = tuple(map(pd.to_datetime, date_range))
             start_date, end_date = user_date_input
             # filter dataframe between selected dates
             crimes_df = crimes_df.loc[crimes_df['date'].between(start_date, end_date)]
@@ -155,14 +155,14 @@ class StreamlitDashboardManager:
             crimes_df = cls.load_crimes_of_type_into_df(crimes_of_primary_type)
             # create a date input and let user change dates
             # default values will be the minimum and maximum of fetched crimes dates
-            user_date_input = st.date_input(
+            selected_dates = st.date_input(
                 "Crimes Date",
                 value=(crimes_df['date'].min(), crimes_df['date'].max()),
                 min_value=crimes_df['date'].min(),
                 max_value=crimes_df['date'].max()
             )
             # filter crimes Dataframe based on user selected dates
-            crimes_df = cls.filter_crimes_df_based_on_date(crimes_df, user_date_input)
+            crimes_df = cls.filter_crimes_df_based_on_date(crimes_df, selected_dates)
             # let user know how many crimes are shown on the map
             st.write(f'Found {len(crimes_df)} crimes of type "{selected_primary_type}" between selected dates')
             # everything is fine, show the map!
