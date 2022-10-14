@@ -11,6 +11,7 @@ from big_query.crimes import BigQueryManager
 from celery_app.cache_manager import CacheManager
 from utilities.log_utils import LogUtils
 
+# loading environment variables which are defined in .env file
 load_dotenv()
 
 redis_host = os.environ.get('REDIS_HOST', 'localhost')

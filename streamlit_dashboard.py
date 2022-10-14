@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from utilities.log_utils import LogUtils
 
+# loading environment variables which are defined in .env file
 load_dotenv()
 
 # get the flask base url from environment variables

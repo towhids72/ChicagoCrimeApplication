@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from utilities.log_utils import LogUtils
 
+# loading environment variables which are defined in .env file
 load_dotenv()
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
 redis_port = os.environ.get('REDIS_PORT', 6379)

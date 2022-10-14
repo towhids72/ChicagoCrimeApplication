@@ -5,7 +5,7 @@ from flask import Flask
 
 from api.routes import chicago_crimes_blueprint
 
-# loading environment variables which defined in .env file
+# loading environment variables which are defined in .env file
 load_dotenv()
 debug_mode = os.environ.get('FLASK_DEBUG') == '1'
 application = Flask(__name__)
