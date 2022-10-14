@@ -1,4 +1,3 @@
-import os
 from typing import List, Dict, Tuple, Set, Union
 
 from google.cloud import bigquery
@@ -112,7 +111,3 @@ class BigQueryManager:
         # convert crimes type to tuple because later we want to query crimes based on these types,
         # so they must not be mutable
         return tuple(primary_types)
-
-
-if __name__ == '__main__':
-    BigQueryManager().query_crimes_by_primary_type('HOMICIDE')
