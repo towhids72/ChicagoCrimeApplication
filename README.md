@@ -41,7 +41,7 @@ crime type and also crimes date.
     * Now open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
 
 
-###Warnings
+### Warnings
 First time it may take a bit longer to load the map, it tries to cache the data, after that it will load faster
 
 
