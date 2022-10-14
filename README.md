@@ -4,9 +4,9 @@ This application shows a map of Chicago crimes, which is filterable based on
 crime type and also crimes date.
 
 ### How to run
-####You can run application in development or in production
+### You can run application in development or in production
 
-* Run in production using docker
+* _**Run in production using docker**_
   * Copy your Google credential file to the project root directory, we use this file to connect to Google BigQuery
   * Create a ".env" file in the project root directory, docker containers will look for this 
     file to load environment variables
@@ -19,7 +19,7 @@ crime type and also crimes date.
   * Open http://0.0.0.0:8050 on your browser, you will see streamlit dashboard
 
 
-* Run in development(locally)
+* **_Run in development(locally)_**
     * Create a virtual environment with python 3.10, you can use conda:
       * `conda create --name=your_env_name python=3.10`
       * `conda activate your_env_name`
