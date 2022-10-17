@@ -37,11 +37,13 @@ class BigQueryManager:
 
         # a query expression that selects distinct latitude, longitude, and crime date, which is ordered by crimes
         # date and limited to 2000 datapoints.
+        # IMPORTANT CHANGE: We shouldn't group data here, because we may lose some crimes data, so "GROUP BY"
+        # here acts like "DISTINCT", so we must remove "GROUP BY" from the query
         query_expression = (
             f'SELECT latitude, longitude, DATE(date) AS crime_date '
             f'FROM `bigquery-public-data.chicago_crime.crime` '
             f'WHERE primary_type=@primary_type '
-            f'GROUP BY latitude, longitude, crime_date '
+            # f'GROUP BY latitude, longitude, crime_date '
             f'ORDER BY crime_date DESC LIMIT 2000'
         )
 

@@ -107,13 +107,15 @@ class StreamlitDashboardManager:
                     pickable=True,
                     extruded=True,
                 ),
-                pdk.Layer(
-                    'ScatterplotLayer',
-                    data=crimes_df,
-                    get_position='[lon, lat]',
-                    get_color='[200, 30, 0, 160]',
-                    get_radius=100,
-                ),
+                # This layer was here for test purposes, we must remove this layer, otherwise
+                # it will draw two layer on the map
+                # pdk.Layer(
+                #     'ScatterplotLayer',
+                #     data=crimes_df,
+                #     get_position='[lon, lat]',
+                #     get_color='[200, 30, 0, 160]',
+                #     get_radius=100,
+                # ),
             ],
         ))
 
